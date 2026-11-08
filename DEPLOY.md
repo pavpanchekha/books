@@ -26,7 +26,8 @@ key cannot run arbitrary commands, including commands as `admin`.
 
 Install Python, `uv`, rsync, SSH and `cwebp`, and run `uv sync`. No `server`
 SSH alias is required. `DEPLOY_KEY_FILE` and `DEPLOY_HOST` can override the
-defaults. Verify the server's SSH host key on a new machine before deploying.
+defaults. The default host's verified ED25519 key is pinned in
+`.agents/known_hosts`; a custom host uses the machine's normal SSH trust store.
 
 Run `make sync-catalog` before writing to load the live index and vocabulary.
 It fetches published HTML over public HTTPS, retains only title/token metadata

@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import sys
 
 from bookmaker.catalog import sync_catalog
 from bookmaker.repository import index_order, update_index
@@ -32,15 +33,20 @@ def main():
         update_index(root, name, local_filenames=set(selected))
     for name in selected:
         update_index(root, name, local_filenames=set(selected))
-    command = ['python3', 'optimize_art.py']
+    command = [sys.executable, 'optimize_art.py']
     if args.slug:
         command += ['--slug', args.slug]
     subprocess.run(command, cwd=root, check=True)
     key = os.environ.get('DEPLOY_KEY_FILE', str(root / '.deploy/ssh/nsp-deploy'))
     host = os.environ.get('DEPLOY_HOST', 'nsp-deploy@pavpanchekha.com')
-    ssh = shlex.join(['ssh', '-i', key, '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes'])
+    ssh_args = ['ssh', '-i', key, '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes']
+    if host == 'nsp-deploy@pavpanchekha.com':
+        ssh_args += ['-o', f'UserKnownHostsFile={root / ".agents/known_hosts"}',
+                     '-o', 'GlobalKnownHostsFile=/dev/null', '-o', 'StrictHostKeyChecking=yes']
+    ssh = shlex.join(ssh_args)
     def upload(sources, destination):
-        subprocess.run(['rsync', '-az', '-e', ssh, *sources, f'{host}:{destination}'], cwd=root, check=True)
+        subprocess.run(['rsync', '-az', '--chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r',
+                        '-e', ssh, *sources, f'{host}:{destination}'], cwd=root, check=True)
     art = root / '.deploy/art'
     if args.slug:
         art = art / args.slug

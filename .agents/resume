@@ -22,7 +22,7 @@ install -d -m 700 "$key_dir"
 chmod 700 -- "$deploy_dir" "$key_dir"
 tmp="$(mktemp "$key_dir/.nsp-deploy.XXXXXX")"
 trap 'rm -f -- "$tmp"' EXIT
-printf '%s' "$DEPLOY_KEY" > "$tmp"
+printf '%s\n' "$DEPLOY_KEY" > "$tmp"
 chmod 600 -- "$tmp"
 mv -f -- "$tmp" "$key_file"
 trap - EXIT

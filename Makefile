@@ -8,13 +8,13 @@ export DEPLOY_KEY_FILE DEPLOY_HOST
 build: deploy
 
 deploy:
-	python3 deploy.py $(if $(SLUG),--slug '$(SLUG)')
+	uv run python deploy.py $(if $(SLUG),--slug '$(SLUG)')
 
 sync-catalog:
-	python3 -m bookmaker.catalog
+	uv run python -m bookmaker.catalog
 
 optimize-art:
-	python3 optimize_art.py $(if $(SLUG),--slug '$(SLUG)')
+	uv run python optimize_art.py $(if $(SLUG),--slug '$(SLUG)')
 
 test:
 	uv run pytest
