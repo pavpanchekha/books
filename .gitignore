@@ -1,0 +1,21 @@
+.DS_Store
+.pytest_cache/
+.venv/
+.deploy/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# The personal library, including its changing catalog, stays on this machine.
+/*.html
+/art/
+/book-data/
+
+# Credentials and local overrides must never be published.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_ed25519*
+id_rsa*

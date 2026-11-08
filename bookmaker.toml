@@ -1,0 +1,22 @@
+[models]
+# Each role can move independently. The provider seam lives in
+# bookmaker/providers.py; only "openai" is implemented initially.
+provider = "openai"
+writer = "gpt-5.6-luna"
+editor = "gpt-5.6-sol"
+art_director = "gpt-5.6-luna"
+art_reviewer = "gpt-5.6-terra"
+image = "gpt-image-2.5-flare"
+image_reviewer = "gpt-5.6-luna"
+translator = "gpt-5.6-luna"
+
+[images]
+size = "960x1280"
+quality = "medium"
+format = "png"
+parallelism = 3
+max_review_rounds = 2
+
+[paths]
+source = "book-data"
+art = "art"

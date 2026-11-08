@@ -1,0 +1,25 @@
+[project]
+name = "nicholas-bookmaker"
+version = "0.1.0"
+description = "Resumable AI-assisted pipeline for Nicholas's early-reader books"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=2.0",
+  "pydantic>=2.8",
+]
+
+[project.scripts]
+bookmaker = "bookmaker.cli:main"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["bookmaker*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
