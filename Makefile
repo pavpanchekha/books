@@ -1,24 +1,23 @@
-.PHONY: build deploy optimize-art test book
+.PHONY: build deploy sync-catalog optimize-art test book
 
-DEPLOY_KEY := $(CURDIR)/.deploy/ssh/nsp-deploy
-DEPLOY_SSH := ssh -i '$(DEPLOY_KEY)' -o IdentitiesOnly=yes -o BatchMode=yes
-DEPLOY_HOST := nsp-deploy@server
+# Override these for a fresh machine; no SSH alias is required.
+DEPLOY_KEY ?= $(CURDIR)/.deploy/ssh/nsp-deploy
+DEPLOY_HOST ?= nsp-deploy@pavpanchekha.com
+export DEPLOY_KEY DEPLOY_HOST
 
 build: deploy
 
-# Remote paths are relative to the directory enforced by rrsync.
-deploy: optimize-art
-	rsync -az -e "$(DEPLOY_SSH)" .deploy/art/ $(DEPLOY_HOST):art/
-	rsync -az -e "$(DEPLOY_SSH)" *.html book.css book.js $(DEPLOY_HOST):./
-	# Retire server originals only after the compressed art and pages are live.
-	rsync -az --delete -e "$(DEPLOY_SSH)" .deploy/art/ $(DEPLOY_HOST):art/
+deploy:
+	python3 deploy.py $(if $(SLUG),--slug '$(SLUG)')
+
+sync-catalog:
+	python3 -m bookmaker.catalog
 
 optimize-art:
-	python3 optimize_art.py
+	python3 optimize_art.py $(if $(SLUG),--slug '$(SLUG)')
 
 test:
 	uv run pytest
 
-# Usage: make book SLUG=space-cats IDEA='Nicholas meets cats on the moon'
-book:
+book: sync-catalog
 	uv run bookmaker run "$(SLUG)" "$(IDEA)" --deploy

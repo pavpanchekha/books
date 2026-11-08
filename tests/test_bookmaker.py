@@ -122,3 +122,50 @@ def test_build_renders_book_and_updates_index_without_api_key(tmp_path: Path) ->
     assert output.exists()
     assert 'href="mars.html"' in (tmp_path / "index.html").read_text()
     assert f"{len(visible_words(draft))} English words" in (tmp_path / "index.html").read_text()
+
+
+def test_partial_index_preserves_remote_books_and_recency(tmp_path: Path) -> None:
+    import json
+    from bookmaker.repository import index_order, update_index
+
+    (tmp_path / '.deploy').mkdir()
+    (tmp_path / '.deploy/catalog.json').write_text(json.dumps({
+        'older.html': {'title': 'Older Mars', 'tokens': ['Older', 'Mars']},
+    }))
+    (tmp_path / 'index.html').write_text(
+        '<ol class="book-list"><li><a href="mars.html">Mars</a></li>'
+        '<li><a href="older.html">Older</a></li></ol>'
+    )
+    (tmp_path / 'mars.html').write_text(render_book(
+        slug='mars', draft=sample_draft(), visual=sample_visual(),
+        translations=TranslationSet(translations=[]),
+    ))
+    update_index(tmp_path, 'mars.html')
+    assert index_order(tmp_path) == ['mars.html', 'older.html']
+    assert '2 English words' in (tmp_path / 'index.html').read_text()
+    assert not (tmp_path / 'older.html').exists()
+    update_index(tmp_path, 'older.html')
+    assert index_order(tmp_path) == ['mars.html', 'older.html']
+
+
+def test_missing_catalog_data_refuses_to_drop_book(tmp_path: Path) -> None:
+    import pytest
+    from bookmaker.repository import update_index
+    original = '<ol class="book-list"><a href="missing.html">Missing</a></ol>'
+    (tmp_path / 'index.html').write_text(original)
+    with pytest.raises(ValueError, match='Missing catalog data'):
+        update_index(tmp_path, 'missing.html')
+    assert (tmp_path / 'index.html').read_text() == original
+
+
+def test_cached_vocabulary_works_without_book_pages(tmp_path: Path) -> None:
+    import json
+    from bookmaker.repository import older_corpus_words
+    (tmp_path / '.deploy').mkdir()
+    (tmp_path / '.deploy/catalog.json').write_text(json.dumps({
+        'older.html': {'title': 'Mars', 'tokens': ['Mars', 'rock']},
+    }))
+    (tmp_path / 'index.html').write_text(
+        '<ol class="book-list"><a href="older.html">Mars</a></ol>'
+    )
+    assert older_corpus_words(tmp_path, 'new.html') == ['Mars', 'rock']

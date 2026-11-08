@@ -69,6 +69,13 @@ def parse_book(path: Path) -> tuple[str, list[str]]:
     return parser.title, parser.stories
 
 
+def cached_tokens(root: Path, filename: str) -> list[str]:
+    cache = root / ".deploy" / "catalog.json"
+    if cache.exists():
+        return json.loads(cache.read_text()).get(filename, {}).get("tokens", [])
+    return []
+
+
 def corpus_words(root: Path) -> list[str]:
     result: list[str] = []
     for filename in index_order(root):
@@ -76,6 +83,8 @@ def corpus_words(root: Path) -> list[str]:
         if path.exists():
             title, stories = parse_book(path)
             result.extend(words(" ".join([title, *stories])))
+        else:
+            result.extend(cached_tokens(root, filename))
     return result
 
 
@@ -90,10 +99,14 @@ def older_corpus_words(root: Path, filename: str) -> list[str]:
         if path.exists():
             title, stories = parse_book(path)
             result.extend(words(" ".join([title, *stories])))
+        else:
+            result.extend(cached_tokens(root, older_filename))
     return result
 
 
 def index_order(root: Path) -> list[str]:
+    if not (root / "index.html").exists():
+        return []
     index = (root / "index.html").read_text()
     match = re.search(r'<ol class="book-list">(.*?)</ol>', index, re.DOTALL)
     if not match:
@@ -208,15 +221,23 @@ Visual bible:
 '''
 
 
-def update_index(root: Path, newest_filename: str) -> None:
+def update_index(root: Path, newest_filename: str, *, local_filenames: set[str] | None = None) -> None:
     order = index_order(root)
-    order = [newest_filename, *(name for name in order if name != newest_filename)]
+    if newest_filename not in order:
+        order.insert(0, newest_filename)
+    cache_path = root / ".deploy" / "catalog.json"
+    cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
     books: list[tuple[str, str, list[str]]] = []
     for filename in order:
         path = root / filename
-        if path.exists():
+        if path.exists() and (local_filenames is None or filename in local_filenames):
             title, stories = parse_book(path)
             books.append((filename, title, words(" ".join([title, *stories]))))
+        elif filename in cache:
+            record = cache[filename]
+            books.append((filename, record["title"], record["tokens"]))
+        else:
+            raise ValueError(f"Missing catalog data for {filename}; run make sync-catalog")
 
     older: set[str] = set()
     rendered_reversed: list[str] = []
@@ -239,7 +260,7 @@ def update_index(root: Path, newest_filename: str) -> None:
         older.update(token.lower() for token in tokens)
     rendered = "\n".join(reversed(rendered_reversed))
     index_path = root / "index.html"
-    source = index_path.read_text()
+    source = index_path.read_text() if index_path.exists() else '<!doctype html><html><head><link rel="stylesheet" href="book.css"></head><body><h1>Books</h1><ol class="book-list"></ol></body></html>'
     updated, count = re.subn(
         r'<ol class="book-list">.*?</ol>',
         f'<ol class="book-list">\n{rendered}\n      </ol>',

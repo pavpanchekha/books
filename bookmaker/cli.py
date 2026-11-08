@@ -92,7 +92,7 @@ def main(argv: list[str] | None = None) -> None:
             if any(problem.startswith("ERROR:") for problem in problems):
                 raise SystemExit(1)
         if getattr(args, "deploy", False):
-            subprocess.run(["make"], cwd=root, check=True)
+            subprocess.run(["make", "deploy", f"SLUG={slug}"], cwd=root, check=True)
     except (OSError, RuntimeError, ValueError) as error:
         print(f"bookmaker: {error}", file=sys.stderr)
         raise SystemExit(1) from error

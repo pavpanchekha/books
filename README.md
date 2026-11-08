@@ -34,3 +34,7 @@ A clone contains the tools, not the library. To use the existing collection
 on another machine, copy the root HTML files, `art/`, and `book-data/` from
 this machine separately. For deployment, also provision the ignored SSH key
 as described in `DEPLOY.md`. GitHub is not a backup of the local library.
+
+You can also publish from a partial checkout: `make sync-catalog` loads the
+published vocabulary, and `make deploy SLUG=space-cats` publishes just one local
+book while preserving the remote library. See [DEPLOY.md](DEPLOY.md).

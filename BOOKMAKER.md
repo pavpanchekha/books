@@ -48,5 +48,6 @@ Run tests with `uv run pytest`.
 `make` requires `cwebp` (`brew install webp`). It creates full-resolution WebP
 copies at quality 85, updates image URLs in the HTML, and deploys them. PNG/JPEG
 originals remain locally for future edits but are excluded from deployment;
-obsolete server originals are removed after the updated pages are uploaded.
+obsolete server originals are retained so a partial checkout cannot delete
+another book’s artwork.
 Unchanged images are reused without recompression.

@@ -19,3 +19,35 @@ munges uploaded symlinks so they cannot target files outside it.
 
 The normal `admin` SSH login remains available separately. The deployment
 key cannot run arbitrary commands, including commands as `admin`.
+
+## Publish from a partial checkout
+
+Copy the deploy key securely to the new machine, install Python, `uv`, rsync,
+SSH and `cwebp`, and run `uv sync`. No `server` SSH alias is required now.
+`DEPLOY_KEY` and `DEPLOY_HOST` can override the defaults. Verify the server's
+SSH host key on the new machine before deploying.
+
+Run `make sync-catalog` before writing to load the live index and vocabulary.
+It fetches published HTML over public HTTPS, retains only title/token metadata
+in ignored `.deploy/catalog.json`, and keeps no older book pages or artwork.
+It refreshes local `index.html` from the live website.
+
+Create just the new book's HTML and `art/<slug>/`, then run:
+
+```sh
+make deploy SLUG=space-cats
+```
+
+This refreshes the live catalog, compresses and uploads only that book's art,
+then uploads its HTML and shared CSS/JS, and uploads the merged index last.
+Existing books retain their order; new books go first. Counts and new-word
+lists are rebuilt using published text plus local book text. Missing catalog
+metadata causes an error rather than silently dropping entries.
+
+Plain `make` publishes the locally available books with the same catalog merge.
+Neither form deletes remote artwork; obsolete files can remain on the server.
+`make book SLUG=... IDEA='...'` syncs the catalog before generation and deploys
+only the resulting book. `bookmaker build ... --deploy` also deploys one book.
+
+Deploy from one device at a time: catalog refresh and upload are not a server
+transaction, so simultaneous publishers can overwrite each other's index.
