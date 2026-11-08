@@ -36,7 +36,7 @@ def main():
     if args.slug:
         command += ['--slug', args.slug]
     subprocess.run(command, cwd=root, check=True)
-    key = os.environ.get('DEPLOY_KEY', str(root / '.deploy/ssh/nsp-deploy'))
+    key = os.environ.get('DEPLOY_KEY_FILE', str(root / '.deploy/ssh/nsp-deploy'))
     host = os.environ.get('DEPLOY_HOST', 'nsp-deploy@pavpanchekha.com')
     ssh = shlex.join(['ssh', '-i', key, '-o', 'IdentitiesOnly=yes', '-o', 'BatchMode=yes'])
     def upload(sources, destination):

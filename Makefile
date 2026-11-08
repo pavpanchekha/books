@@ -1,9 +1,9 @@
 .PHONY: build deploy sync-catalog optimize-art test book
 
 # Override these for a fresh machine; no SSH alias is required.
-DEPLOY_KEY ?= $(CURDIR)/.deploy/ssh/nsp-deploy
+DEPLOY_KEY_FILE ?= $(CURDIR)/.deploy/ssh/nsp-deploy
 DEPLOY_HOST ?= nsp-deploy@pavpanchekha.com
-export DEPLOY_KEY DEPLOY_HOST
+export DEPLOY_KEY_FILE DEPLOY_HOST
 
 build: deploy
 

@@ -1,9 +1,11 @@
 Run `make deploy` (or plain `make`) to optimize art and upload the books.
 
-Deployment uses `nsp-deploy@server` and the private key at
-`.deploy/ssh/nsp-deploy`. That key is mode 600 and excluded from Git by the
-existing `.deploy/` ignore rule. Keep it when cleaning build artifacts;
-another checkout or machine needs a copy of the key or a newly authorized key.
+Deployment uses `nsp-deploy@pavpanchekha.com` and the private key at
+`.deploy/ssh/nsp-deploy`. In Amp orbs, the project-scoped `DEPLOY_KEY` secret
+is materialized there by the checked-in `.agents/resume` hook after snapshot
+restore. The key is mode 600 inside mode-700 directories and excluded from Git
+by the existing `.deploy/` ignore rule. Never commit the key. Outside Amp,
+provision the key at that path or set `DEPLOY_KEY_FILE` to another key-file path.
 
 On the server, `nsp-deploy` owns `/var/www/me/nsp` and has no extra groups or
 sudo privileges. Its root-owned home is `/var/lib/nsp-deploy`. The root-owned
@@ -22,10 +24,9 @@ key cannot run arbitrary commands, including commands as `admin`.
 
 ## Publish from a partial checkout
 
-Copy the deploy key securely to the new machine, install Python, `uv`, rsync,
-SSH and `cwebp`, and run `uv sync`. No `server` SSH alias is required now.
-`DEPLOY_KEY` and `DEPLOY_HOST` can override the defaults. Verify the server's
-SSH host key on the new machine before deploying.
+Install Python, `uv`, rsync, SSH and `cwebp`, and run `uv sync`. No `server`
+SSH alias is required. `DEPLOY_KEY_FILE` and `DEPLOY_HOST` can override the
+defaults. Verify the server's SSH host key on a new machine before deploying.
 
 Run `make sync-catalog` before writing to load the live index and vocabulary.
 It fetches published HTML over public HTTPS, retains only title/token metadata

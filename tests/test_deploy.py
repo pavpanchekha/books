@@ -43,6 +43,11 @@ def test_new_book_from_partial_checkout(tmp_path, monkeypatch):
         '#!/usr/bin/env python3\n'
         'import os, sys, shlex\n'
         'args = sys.argv[1:]\n'
+        'for index, arg in enumerate(args):\n'
+        '    if arg == "-i":\n'
+        '        with open(os.environ["TEST_IDENTITY_LOG"], "w") as log:\n'
+        '            log.write(args[index + 1])\n'
+        '        break\n'
         'while args and args[0] in ("-i", "-o"):\n'
         '    args = args[2:]\n'
         'args = args[1:]\n'
@@ -53,7 +58,10 @@ def test_new_book_from_partial_checkout(tmp_path, monkeypatch):
     ssh.chmod(0o755)
     monkeypatch.setenv('PATH', str(bin_dir) + os.pathsep + os.environ['PATH'])
     monkeypatch.setenv('TEST_REMOTE', str(remote))
+    monkeypatch.setenv('TEST_IDENTITY_LOG', str(tmp_path / 'identity-path'))
     monkeypatch.setenv('DEPLOY_HOST', 'fixture')
+    monkeypatch.setenv('DEPLOY_KEY', 'SYNTHETIC_PRIVATE_KEY_CONTENT')
+    monkeypatch.setenv('DEPLOY_KEY_FILE', str(tmp_path / 'private-key'))
     handler = functools.partial(SimpleHTTPRequestHandler, directory=str(remote))
     server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -66,6 +74,7 @@ def test_new_book_from_partial_checkout(tmp_path, monkeypatch):
         monkeypatch.setattr(deploy, 'sync_catalog', lambda root: sync_catalog(root, site))
         monkeypatch.setattr('sys.argv', ['deploy.py', '--slug', 'new'])
         deploy.main()
+        assert (tmp_path / 'identity-path').read_text() == str(tmp_path / 'private-key')
         assert index_order(remote) == ['new.html', 'old.html']
         assert (remote / 'old.html').read_text() == old
         assert (remote / 'art/old/keep.webp').read_bytes() == b'old artwork must survive'

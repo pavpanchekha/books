@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Amp runs this hook after snapshot restore and applies the current secrets first.
+if [[ -z "${DEPLOY_KEY:-}" ]]; then
+  printf '%s\n' 'DEPLOY_KEY is unavailable; deployment key was not provisioned.' >&2
+  exit 1
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+deploy_dir="$repo_root/.deploy"
+key_dir="$deploy_dir/ssh"
+key_file="$key_dir/nsp-deploy"
+
+if [[ -L "$deploy_dir" || -L "$key_dir" ]]; then
+  printf '%s\n' 'Refusing a symlinked deployment-key directory.' >&2
+  exit 1
+fi
+
+umask 077
+install -d -m 700 "$key_dir"
+chmod 700 -- "$deploy_dir" "$key_dir"
+tmp="$(mktemp "$key_dir/.nsp-deploy.XXXXXX")"
+trap 'rm -f -- "$tmp"' EXIT
+printf '%s' "$DEPLOY_KEY" > "$tmp"
+chmod 600 -- "$tmp"
+mv -f -- "$tmp" "$key_file"
+trap - EXIT
